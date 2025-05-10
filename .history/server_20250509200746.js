@@ -675,7 +675,12 @@ server.listen(PORT, '0.0.0.0', () => {
 });
 
 
+// WebSocket setup here...
 
+// ✅ Healthcheck route for uptime monitoring
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
 
 // --- Graceful Shutdown ---
 function gracefulShutdown(signal) {

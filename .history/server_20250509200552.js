@@ -674,15 +674,12 @@ server.listen(PORT, '0.0.0.0', () => {
   systemLogger.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
-
-
-
 // --- Graceful Shutdown ---
 function gracefulShutdown(signal) {
   systemLogger.log(`${signal} signal received. Closing server gracefully...`);
   server.close(() => {
     systemLogger.log('HTTP server closed.');
-    wss.clients.forEach(client => client.terminate());
+    wss.clients.forEach(client => client.terminate()); // Close all WebSocket connections
     wss.close(() => {
         systemLogger.log('WebSocket server closed.');
         pool.end(() => {
@@ -692,11 +689,16 @@ function gracefulShutdown(signal) {
     });
   });
 
+  // Healthcheck route for uptime monitoring
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
+  // If server hasn't finished in a timeout, force exit
   setTimeout(() => {
     systemLogger.error('Could not close connections in time, forcefully shutting down');
     process.exit(1);
   }, 10000); // 10 seconds
 }
-
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT')); // For Ctrl+C in local dev
